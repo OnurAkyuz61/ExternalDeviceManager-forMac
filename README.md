@@ -1,69 +1,128 @@
-## External Device Manager (macOS Menu Bar App)
+## External Device Manager for macOS
 
-Küçük ve modern bir macOS menü çubuğu uygulaması.  
-Mac’e bağlı **harici diskleri (USB, harici HDD/SSD)** listeler ve güvenli şekilde **Eject (Çıkar)** işlemi yapar.
+Modern ve hafif bir **macOS menü çubuğu uygulaması**.  
+Mac’inize bağlı **harici diskleri (USB, harici HDD/SSD)** otomatik olarak algılar, listeler ve güvenli şekilde **Eject (Çıkar)** etmenizi sağlar.
 
-### Özellikler
+Repo: [OnurAkyuz61/ExternalDeviceManager-forMac](https://github.com/OnurAkyuz61/ExternalDeviceManager-forMac)
 
-- **Sadece menü çubuğunda çalışır**
-  - Dock’ta görünmez
-  - Cmd + Tab listesinde görünmez
-- **MenuBarExtra** tabanlı SwiftUI arayüz
-- Sadece **eject edilebilir** ve **dahili olmayan** volume’lar listelenir
-- Her aygıt için:
+---
+
+### Uygulama Özeti
+
+- **Tamamen menü çubuğunda yaşar**  
+  - Dock’ta görünmez  
+  - Cmd + Tab listesinde görünmez  
+- macOS stiline uygun, sade ve **developer-friendly** bir arayüz  
+- Sistem dili Türkçe ise UI Türkçe, diğer durumlarda İngilizce  
+- Her harici disk için:
   - Disk adı
   - İsteğe bağlı detay (mount path)
   - **Eject** butonu
-- Eject sonrası liste otomatik yenilenir
-- Harici aygıt takıldığında / çıkarıldığında liste **otomatik güncellenir**
+- Eject sonrası liste otomatik yenilenir  
+- Harici aygıt takıldığında / çıkarıldığında liste **gerçek zamanlı** güncellenir
 
-### Teknik Detaylar
+Uygulama ikonu olarak macOS SF Symbols içindeki `externaldrive` simgesi kullanılır; status bar’da tek bir disk ikonu olarak görünür.
+
+---
+
+### Teknik Stack
 
 - **Dil**: Swift
-- **UI**: SwiftUI
+- **UI**: SwiftUI (`MenuBarExtra`, reactive view yapısı)
 - **Hedef platform**: macOS 13+
 - **Mimari**: Basit MVVM
   - `ExternalDevice` → aygıt modeli
   - `DeviceManager` → harici volume tespiti ve eject işlemleri
-  - `DeviceListViewModel` → SwiftUI için durum yönetimi
-  - `ContentView` → menü popover arayüzü
-  - `External_Device_ManagerApp` + `AppDelegate` → sadece menü çubuğu uygulaması olarak çalışma
+  - `DeviceListViewModel` → SwiftUI için durum yönetimi + NSWorkspace bildirimleri
+  - `ContentView` → menü popover UI
+  - `External_Device_ManagerApp` + `AppDelegate` → sadece menü çubuğu uygulaması
+- **Frameworkler**
+  - `SwiftUI` – UI
+  - `AppKit` – `NSApplication`, `NSWorkspace`
+  - `Combine` – `ObservableObject`, `@Published`
+  - `Foundation` – dosya sistemi ve temel tipler
 
-### Dosya Yapısı (Önemli Dosyalar)
+---
 
-- `External_Device_ManagerApp.swift`
-  - `MenuBarExtra` tanımı
-  - Dock/Cmd+Tab görünürlüğünü gizleyen `AppDelegate`
-- `ContentView.swift`
-  - “Bağlı Harici Aygıtlar” başlığı
-  - Aygıt listesi + “Eject” butonları
-  - “Harici aygıt bulunamadı” boş durum mesajı
-  - “Quit” butonu
-- `ExternalDevice.swift`
+### Öne Çıkan Davranışlar
+
+- **Dock ve Cmd+Tab’te gizli çalışma**
+  - `NSApp.setActivationPolicy(.accessory)` ile sağlanır
+- **Harici aygıt tespiti**
+  - `FileManager.mountedVolumeURLs(includingResourceValuesForKeys:options:)`
+  - `URLResourceValues.volumeIsEjectable`
+  - `URLResourceValues.volumeIsInternal`
+  - Yalnızca **eject edilebilir** ve **dahili olmayan** diskler listelenir
+- **Güvenli eject**
+  - macOS 13+ için `await NSWorkspace.shared.unmountAndEjectDevice(at:)`
+  - Hata olduğunda menü içinde kısa kırmızı hata mesajı
+- **Gerçek zamanlı güncelleme**
+  - `NSWorkspace.didMountNotification`
+  - `NSWorkspace.didUnmountNotification`
+  - Her mount/unmount sonrasında liste otomatik yenilenir
+- **Otomatik dil seçimi**
+  - `Locale.preferredLanguages` üzerinden sistem diline bakılır  
+  - `tr` → Türkçe, diğer tüm diller → İngilizce
+
+---
+
+### Önemli Dosyalar
+
+- `External_Device_ManagerApp.swift`  
+  - `@main` App giriş noktası  
+  - `MenuBarExtra` tanımı  
+  - Dock / Cmd+Tab gizleme (`AppDelegate` + `NSApp.setActivationPolicy(.accessory)`)
+
+- `ContentView.swift`  
+  - Menü popover arayüzü  
+  - “Bağlı Harici Aygıtlar” / “Connected External Devices” başlığı  
+  - Harici aygıt listesi + her satırda **Eject**  
+  - Boş durumda “Harici aygıt bulunamadı” / “No external devices found” mesajı  
+  - Dil otomatik seçimi (sistem diline göre)  
+  - En altta **Quit** butonu
+
+- `ExternalDevice.swift`  
   - Menüde gösterilen aygıt modeli (id, name, detail, url)
-- `DeviceManager.swift`
-  - `FileManager.mountedVolumeURLs` + `URLResourceValues` ile harici aygıt tespiti
-  - `NSWorkspace.unmountAndEjectDevice` ile güvenli eject
-- `DeviceListViewModel.swift`
-  - Aygıt listesini ve hata mesajlarını yönetir
-  - `NSWorkspace.didMountNotification` ve `didUnmountNotification` dinleyerek gerçek zamanlı güncelleme yapar
 
-### Kurulum ve Çalıştırma
+- `DeviceManager.swift`  
+  - Dosya sistemi üzerinden harici volume tespiti  
+  - Async/await ile güvenli eject (`unmountAndEjectDevice`)
 
-1. Bu projeyi Xcode ile açın:
+- `DeviceListViewModel.swift`  
+  - `ObservableObject` tabanlı ViewModel  
+  - Aygıt listesini ve hata mesajlarını yönetir  
+  - Mount / unmount bildirimlerini dinler, listeyi yeniler
+
+- `Localization.swift`  
+  - Basit `AppLanguage` enum’u (`tr` / `en`)  
+  - Tüm kullanıcıya dönük metinler için `L10n` helper’ı  
+  - `currentLanguage()` ile sistem diline göre otomatik seçim
+
+---
+
+### Geliştirici İçin Hızlı Başlangıç
+
+1. Repoyu klonla:
+   ```bash
+   git clone https://github.com/OnurAkyuz61/ExternalDeviceManager-forMac.git
+   cd ExternalDeviceManager-forMac
+   ```
+2. Xcode ile aç:
    - `External Device Manager.xcodeproj`
-2. Hedef platformun **macOS 13+** olduğundan emin olun.
-3. `External Device Manager` hedefini seçin.
-4. `Run` (⌘R) ile çalıştırın.
-5. Uygulama çalıştığında:
-   - Dock’ta ikon görünmez
-   - Menü çubuğunda yeni bir disk ikonu (`externaldrive`) belirir
-   - Bu ikona tıklayarak harici aygıt listesini ve “Eject” butonlarını görebilirsiniz.
+3. Hedef platformun **macOS 13+** olduğundan emin ol.
+4. `External Device Manager` target’ını seç.
+5. Çalıştır (`⌘R`).
+6. Uygulama çalıştığında:
+   - Dock’ta ikon görünmez  
+   - Menü çubuğunda `externaldrive` ikonunu görürsün  
+   - İkona tıkladığında harici disk listesini ve **Eject** butonlarını görürsün.
 
-### Notlar
+---
 
-- Uygulama sadece eject edilebilir ve dahili olmayan diskleri listeler.
-- Eject işlemi sırasında hata oluşursa, menü içinde kısa bir kırmızı hata mesajı gösterilir.
-- Kod sade, okunabilir ve ek bağımlılık kullanmadan macOS standart framework’lerine dayanır.
+### Lisans
+
+Bu proje **MIT Lisansı** ile lisanslanmıştır.  
+Detaylar için `LICENSE` dosyasına bakabilirsiniz.
+
 
 
