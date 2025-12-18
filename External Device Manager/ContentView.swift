@@ -13,10 +13,8 @@ struct ContentView: View { // Ana içerik view'i tanımı.
 
     @StateObject private var viewModel = DeviceListViewModel() // Harici aygıt listesini yönetecek ViewModel.
 
-    @AppStorage("selectedLanguage") private var languageCode: String = AppLanguage.turkish.rawValue // Seçilen dili UserDefaults üzerinden saklayan property.
-
-    private var language: AppLanguage { // Seçilen dili enum tipine çeviren hesaplanmış property.
-        AppLanguage(rawValue: languageCode) ?? .turkish // Geçersiz değer olursa Türkçe'ye geri düşülür.
+    private var language: AppLanguage { // Sistem diline göre hesaplanan uygulama dili.
+        L10n.currentLanguage() // Localization helper üzerinden otomatik seçim yapılır.
     }
 
     var body: some View { // View'in gövdesi.
@@ -63,20 +61,7 @@ struct ContentView: View { // Ana içerik view'i tanımı.
                     .padding(.top, 4) // Üstten küçük boşluk.
             }
 
-            Divider() // Liste ile alt kısım (dil/quit satırları) arasında ayırıcı.
-
-            // Dil seçimi satırı.
-            HStack { // Yatay hizalı satır.
-                Text(L10n.languageRowTitle(language)) // "Dil" / "Language" metni.
-                    .font(.subheadline) // Biraz küçük başlık fontu.
-                Spacer() // Metin ile picker arasına esnek boşluk.
-                Picker("", selection: $languageCode) { // Boş label'lı picker, seçili dili saklar.
-                    Text(AppLanguage.turkish.displayName).tag(AppLanguage.turkish.rawValue) // Türkçe seçeneği.
-                    Text(AppLanguage.english.displayName).tag(AppLanguage.english.rawValue) // İngilizce seçeneği.
-                }
-                .pickerStyle(.segmented) // Segment kontrolü (iki butonlu görünüm).
-                .frame(width: 150) // Genişliği sınırlı tutulur.
-            }
+            Divider() // Liste ile Quit butonu arasına ayırıcı.
 
             // Quit butonu satırı.
             Button(role: .destructive) { // Destructive rolünde buton (kırmızı vurgu).

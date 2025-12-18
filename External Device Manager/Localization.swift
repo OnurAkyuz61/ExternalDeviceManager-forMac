@@ -26,6 +26,16 @@ enum AppLanguage: String, CaseIterable, Identifiable { // String raw value ve Id
 /// Tüm kullanıcıya dönük metinler için basit bir helper yapı. // UI metinlerini merkezi yönetmek için struct.
 struct L10n { // Localization kısaltması için L10n ismi kullanıldı.
 
+    /// Sistem diline göre uygulama dilini hesaplar. // macOS'in tercih ettiği dile uygun AppLanguage döner.
+    static func currentLanguage() -> AppLanguage { // Statik yardımcı fonksiyon.
+        let preferred = Locale.preferredLanguages.first ?? "tr" // Kullanıcının tercih ettiği ilk dil, yoksa "tr".
+        if preferred.hasPrefix("tr") { // Dil kodu "tr" ile başlıyorsa.
+            return .turkish // Türkçe olarak ayarla.
+        } else { // Diğer tüm diller için varsayılan.
+            return .english // İngilizce kullan.
+        }
+    }
+
     /// Başlık: "Bağlı Harici Aygıtlar" / "Connected External Devices" // Menü başlığı metni.
     static func devicesTitle(_ lang: AppLanguage) -> String { // Dil parametresine göre başlık döndürür.
         switch lang { // Dil seçeneğine göre ayrım yapılır.
