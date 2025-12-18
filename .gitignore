@@ -1,0 +1,25 @@
+## macOS / Xcode / Swift Package Manager
+
+# User-specific Xcode data
+xcuserdata/
+
+# Build products
+DerivedData/
+build/
+
+# Swift Package Manager
+.build/
+Packages/
+
+# SwiftPM Xcode integration
+.swiftpm/
+
+# macOS Finder / OS metadata
+.DS_Store
+*.DS_Store
+
+# Xcode previews cache
+*.xccheckout
+*.xcscmblueprint
+
+
