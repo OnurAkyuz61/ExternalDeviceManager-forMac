@@ -9,11 +9,11 @@ import Foundation
 import AppKit
 
 /// Harici volume / aygıt yönetiminden sorumlu yardımcı sınıf.
-/// - Sadece eject edilebilir ve dahili olmayan volume'ları döner.
+/// - Harici aygıtları, DMG mount'larını ve klasör mount'larını listeler.
 final class DeviceManager {
 
     /// Mevcut harici aygıtları senkron olarak listeler.
-    func fetchExternalDevices() -> [ExternalDevice] {
+    nonisolated func fetchExternalDevices() -> [ExternalDevice] {
         let resourceKeys: [URLResourceKey] = [
             .volumeNameKey,
             .volumeIsEjectableKey,
@@ -32,11 +32,23 @@ final class DeviceManager {
             do {
                 let values = try url.resourceValues(forKeys: Set(resourceKeys))
 
-                let isEjectable = values.volumeIsEjectable ?? false
                 let isInternal = values.volumeIsInternal ?? false
+                let isEjectable = values.volumeIsEjectable ?? false
 
-                // Sadece eject edilebilir ve dahili olmayan volume'lar
-                guard isEjectable, !isInternal else { continue }
+                // Root volume'u (/) hariç tut
+                if url.path == "/" {
+                    continue
+                }
+
+                // /Volumes dizinindeki tüm volume'ları dahil et (klasör mount'ları ve DMG'ler)
+                let isInVolumes = url.path.hasPrefix("/Volumes/")
+                
+                // Dahili olmayan volume'ları göster
+                // Veya /Volumes dizinindeki volume'ları göster (klasör mount'ları için)
+                // Veya ejectable olan volume'ları göster (DMG'ler için)
+                if isInternal && !isEjectable && !isInVolumes {
+                    continue
+                }
 
                 let displayName = values.volumeLocalizedName ??
                                   values.volumeName ??
@@ -62,17 +74,16 @@ final class DeviceManager {
     }
 
     /// Verilen aygıtı güvenli şekilde eject etmeye çalışır.
-    /// macOS 13+ için async/await tabanlı `unmountAndEjectDevice` kullanır.
     /// - Parameter completion: Başarı durumunda `nil`, hata durumunda `Error` döner.
     func eject(device: ExternalDevice, completion: @escaping (Error?) -> Void) {
-        Task {
+        Task.detached {
             do {
-                try await NSWorkspace.shared.unmountAndEjectDevice(at: device.url)
-                DispatchQueue.main.async {
+                try NSWorkspace.shared.unmountAndEjectDevice(at: device.url)
+                await MainActor.run {
                     completion(nil)
                 }
             } catch {
-                DispatchQueue.main.async {
+                await MainActor.run {
                     completion(error)
                 }
             }

@@ -10,16 +10,20 @@ Repo: [OnurAkyuz61/ExternalDeviceManager-forMac](https://github.com/OnurAkyuz61/
 ### Uygulama Özeti
 
 - **Tamamen menü çubuğunda yaşar**  
-  - Dock’ta görünmez  
+  - Dock'ta görünmez  
   - Cmd + Tab listesinde görünmez  
 - macOS stiline uygun, sade ve **developer-friendly** bir arayüz  
 - Sistem dili Türkçe ise UI Türkçe, diğer durumlarda İngilizce  
-- Her harici disk için:
-  - Disk adı
-  - İsteğe bağlı detay (mount path)
+- **Desteklenen aygıt türleri:**
+  - Harici diskler (USB, harici HDD/SSD)
+  - DMG dosyaları (açıldığında mount edilen disk görüntüleri)
+  - Klasör mount'ları (bağlanan klasörler)
+- Her aygıt için:
+  - Aygıt adı ve ikon
   - **Eject** butonu
 - Eject sonrası liste otomatik yenilenir  
 - Harici aygıt takıldığında / çıkarıldığında liste **gerçek zamanlı** güncellenir
+- **Hızlı açılış** - menü anında açılır, aygıtlar arka planda yüklenir
 
 Uygulama ikonu olarak macOS SF Symbols içindeki `externaldrive` simgesi kullanılır; status bar’da tek bir disk ikonu olarak görünür.
 
@@ -52,10 +56,15 @@ Uygulama ikonu olarak macOS SF Symbols içindeki `externaldrive` simgesi kullan�
   - `FileManager.mountedVolumeURLs(includingResourceValuesForKeys:options:)`
   - `URLResourceValues.volumeIsEjectable`
   - `URLResourceValues.volumeIsInternal`
-  - Yalnızca **eject edilebilir** ve **dahili olmayan** diskler listelenir
+  - **Harici diskler**, **DMG mount'ları** ve **klasör mount'ları** listelenir
+  - `/Volumes` dizinindeki tüm mount edilmiş volume'lar dahil edilir
 - **Güvenli eject**
-  - macOS 13+ için `await NSWorkspace.shared.unmountAndEjectDevice(at:)`
+  - `NSWorkspace.shared.unmountAndEjectDevice(at:)` ile güvenli unmount/eject
+  - Arka planda asenkron çalışır, UI donmaz
   - Hata olduğunda menü içinde kısa kırmızı hata mesajı
+- **Performans optimizasyonu**
+  - Aygıt listesi arka planda asenkron yüklenir
+  - Menü açılırken donma olmaz, anında açılır
 - **Gerçek zamanlı güncelleme**
   - `NSWorkspace.didMountNotification`
   - `NSWorkspace.didUnmountNotification`
@@ -75,9 +84,9 @@ Uygulama ikonu olarak macOS SF Symbols içindeki `externaldrive` simgesi kullan�
 
 - `ContentView.swift`  
   - Menü popover arayüzü  
-  - “Bağlı Harici Aygıtlar” / “Connected External Devices” başlığı  
-  - Harici aygıt listesi + her satırda **Eject**  
-  - Boş durumda “Harici aygıt bulunamadı” / “No external devices found” mesajı  
+  - "Bağlı Harici Aygıtlar" / "Connected External Devices" başlığı  
+  - Harici aygıt listesi (ikon + isim) + her satırda **Eject** butonu  
+  - Boş durumda "Harici aygıt bulunamadı" / "No external devices found" mesajı  
   - Dil otomatik seçimi (sistem diline göre)  
   - En altta **Quit** butonu
 
@@ -86,12 +95,15 @@ Uygulama ikonu olarak macOS SF Symbols içindeki `externaldrive` simgesi kullan�
 
 - `DeviceManager.swift`  
   - Dosya sistemi üzerinden harici volume tespiti  
-  - Async/await ile güvenli eject (`unmountAndEjectDevice`)
+  - Klasör mount'ları ve DMG'leri de algılar
+  - Arka planda güvenli eject (`unmountAndEjectDevice`)
+  - Swift 6 strict concurrency uyumlu (`nonisolated` fonksiyonlar)
 
 - `DeviceListViewModel.swift`  
   - `ObservableObject` tabanlı ViewModel  
   - Aygıt listesini ve hata mesajlarını yönetir  
   - Mount / unmount bildirimlerini dinler, listeyi yeniler
+  - Asenkron aygıt yükleme ile performans optimizasyonu
 
 - `Localization.swift`  
   - Basit `AppLanguage` enum’u (`tr` / `en`)  
@@ -109,7 +121,7 @@ Uygulama ikonu olarak macOS SF Symbols içindeki `externaldrive` simgesi kullan�
    ```
 2. Xcode ile aç:
    - `External Device Manager.xcodeproj`
-3. Hedef platformun **macOS 13+** olduğundan emin ol.
+3. Hedef platformun **macOS 26+** olduğundan emin ol.
 4. `External Device Manager` target’ını seç.
 5. Çalıştır (`⌘R`).
 6. Uygulama çalıştığında:

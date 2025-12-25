@@ -33,23 +33,27 @@ struct ContentView: View { // Ana içerik view'i tanımı.
                     .padding(.vertical, 4) // Üst-alt küçük padding.
             } else { // En az bir harici aygıt varsa.
                 ForEach(viewModel.devices) { device in // Her aygıt için satır oluşturulur.
-                    HStack { // Yatay hizalamalı satır.
-                        VStack(alignment: .leading, spacing: 2) { // Aygıt adı ve detayları için dikey stack.
+                    HStack(spacing: 8) { // Yatay hizalamalı satır.
+                        // Volume ikonu
+                        Image(systemName: deviceIcon(for: device))
+                            .foregroundColor(.secondary)
+                            .frame(width: 16)
+                        
+                        VStack(alignment: .leading, spacing: 2) { // Aygıt adı için dikey stack.
                             Text(device.name) // Aygıt adı.
                                 .font(.body) // Varsayılan gövde fontu.
-                            if let detail = device.detail, !detail.isEmpty { // Opsiyonel detay varsa.
-                                Text(detail) // Örneğin mount path bilgisi.
-                                    .font(.caption) // Küçük font.
-                                    .foregroundColor(.secondary) // İkincil renk.
-                            }
+                                .lineLimit(1) // Tek satırda göster
                         }
+                        
                         Spacer() // Metin ile buton arasına esnek boşluk.
+                        
                         Button(L10n.eject(language)) { // Dil'e göre "Eject" butonu.
                             viewModel.eject(device: device) // İlgili aygıt için eject işlemini tetikler.
                         }
                         .buttonStyle(.bordered) // Kenarlıklı, kompakt buton stili.
+                        .controlSize(.small) // Daha küçük buton
                     }
-                    .padding(.vertical, 2) // Satırın üst-alt boşluğu.
+                    .padding(.vertical, 4) // Satırın üst-alt boşluğu.
                 }
             }
 
@@ -80,5 +84,18 @@ struct ContentView: View { // Ana içerik view'i tanımı.
         .onAppear { // View ilk göründüğünde.
             viewModel.start() // ViewModel içi setup ve gözlem başlatma.
         }
+    }
+    
+    /// Aygıt tipine göre uygun ikonu döner.
+    private func deviceIcon(for device: ExternalDevice) -> String {
+        let path = device.url.path
+        if path.hasPrefix("/Volumes/") {
+            // DMG veya klasör mount'u
+            if path.contains(".dmg") || device.name.lowercased().contains("dmg") {
+                return "opticaldiscdrive"
+            }
+            return "externaldrive"
+        }
+        return "externaldrive"
     }
 }

@@ -24,8 +24,8 @@ final class DeviceListViewModel: ObservableObject {
 
     /// Başlat: cihazları yükler ve mount/unmount bildirimlerini dinler.
     func start() {
-        reloadDevices()
         startObservingWorkspaceNotifications()
+        reloadDevices()
     }
 
     /// Temizle: NotificationCenter gözlemcilerini kaldır.
@@ -35,9 +35,16 @@ final class DeviceListViewModel: ObservableObject {
         workspaceObservers.removeAll()
     }
 
-    /// Harici aygıt listesini yeniler.
+    /// Harici aygıt listesini yeniler (async, performans için).
     func reloadDevices() {
-        devices = deviceManager.fetchExternalDevices()
+        let manager = deviceManager
+        Task.detached(priority: .userInitiated) {
+            let fetchedDevices = manager.fetchExternalDevices()
+            
+            await MainActor.run { [weak self] in
+                self?.devices = fetchedDevices
+            }
+        }
     }
 
     /// Verilen aygıt için eject işlemini tetikler.
