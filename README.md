@@ -1,7 +1,9 @@
 ## External Device Manager for macOS
 
+![App Icon](External%20Device%20Manager/Assets.xcassets/AppIcon.appiconset/ExternalDeviceManager-macOS-Default-256x256@1x.png)
+
 Modern ve hafif bir **macOS menü çubuğu uygulaması**.  
-Mac’inize bağlı **harici diskleri (USB, harici HDD/SSD)** otomatik olarak algılar, listeler ve güvenli şekilde **Eject (Çıkar)** etmenizi sağlar.
+Mac'inize bağlı **harici diskleri (USB, harici HDD/SSD)** otomatik olarak algılar, listeler ve güvenli şekilde **Eject (Çıkar)** etmenizi sağlar.
 
 Repo: [OnurAkyuz61/ExternalDeviceManager-forMac](https://github.com/OnurAkyuz61/ExternalDeviceManager-forMac)
 
