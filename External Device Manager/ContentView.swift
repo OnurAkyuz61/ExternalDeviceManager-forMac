@@ -12,6 +12,7 @@ import SwiftUI // SwiftUI arayüz bileşenleri için import edilir.
 struct ContentView: View { // Ana içerik view'i tanımı.
 
     @StateObject private var viewModel = DeviceListViewModel() // Harici aygıt listesini yönetecek ViewModel.
+    @State private var launchAtLoginEnabled = LaunchAtLoginManager.isEnabled // Otomatik başlatma durumu.
 
     private var language: AppLanguage { // Sistem diline göre hesaplanan uygulama dili.
         L10n.currentLanguage() // Localization helper üzerinden otomatik seçim yapılır.
@@ -65,7 +66,22 @@ struct ContentView: View { // Ana içerik view'i tanımı.
                     .padding(.top, 4) // Üstten küçük boşluk.
             }
 
-            Divider() // Liste ile Quit butonu arasına ayırıcı.
+            Divider() // Liste ile ayarlar arasına ayırıcı.
+
+            // Otomatik başlatma toggle butonu.
+            Toggle(isOn: $launchAtLoginEnabled) {
+                HStack { // İkon + metin hizalaması için yatay stack.
+                    Image(systemName: "power") // SF Symbol ikon.
+                    Text(L10n.launchAtLogin(language)) // Dil'e göre otomatik başlatma metni.
+                }
+            }
+            .toggleStyle(.checkbox) // Checkbox stili.
+            .padding(.top, 4) // Üstten küçük boşluk.
+            .onChange(of: launchAtLoginEnabled) { oldValue, newValue in
+                _ = LaunchAtLoginManager.setEnabled(newValue)
+            }
+
+            Divider() // Otomatik başlatma ile Quit butonu arasına ayırıcı.
 
             // Quit butonu satırı.
             Button(role: .destructive) { // Destructive rolünde buton (kırmızı vurgu).

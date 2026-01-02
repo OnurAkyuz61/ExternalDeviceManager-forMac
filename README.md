@@ -1,6 +1,10 @@
 ## External Device Manager for macOS
 
+<div align="center">
+
 ![App Icon](External%20Device%20Manager/Assets.xcassets/AppIcon.appiconset/ExternalDeviceManager-macOS-Default-256x256@1x.png)
+
+</div>
 
 Modern ve hafif bir **macOS menü çubuğu uygulaması**.  
 Mac'inize bağlı **harici diskleri (USB, harici HDD/SSD)** otomatik olarak algılar, listeler ve güvenli şekilde **Eject (Çıkar)** etmenizi sağlar.
@@ -26,6 +30,7 @@ Repo: [OnurAkyuz61/ExternalDeviceManager-forMac](https://github.com/OnurAkyuz61/
 - Eject sonrası liste otomatik yenilenir  
 - Harici aygıt takıldığında / çıkarıldığında liste **gerçek zamanlı** güncellenir
 - **Hızlı açılış** - menü anında açılır, aygıtlar arka planda yüklenir
+- **Otomatik başlatma** - Bilgisayar açıldığında veya yeniden başlatıldığında uygulama otomatik olarak başlar (ayarlanabilir)
 
 Uygulama ikonu olarak macOS SF Symbols içindeki `externaldrive` simgesi kullanılır; status bar’da tek bir disk ikonu olarak görünür.
 
@@ -47,6 +52,7 @@ Uygulama ikonu olarak macOS SF Symbols içindeki `externaldrive` simgesi kullan�
   - `AppKit` – `NSApplication`, `NSWorkspace`
   - `Combine` – `ObservableObject`, `@Published`
   - `Foundation` – dosya sistemi ve temel tipler
+  - `ServiceManagement` – otomatik başlatma (`SMAppService`)
 
 ---
 
@@ -74,6 +80,10 @@ Uygulama ikonu olarak macOS SF Symbols içindeki `externaldrive` simgesi kullan�
 - **Otomatik dil seçimi**
   - `Locale.preferredLanguages` üzerinden sistem diline bakılır  
   - `tr` → Türkçe, diğer tüm diller → İngilizce
+- **Otomatik başlatma desteği**
+  - `SMAppService.mainApp` API'si ile Login Items yönetimi
+  - Kullanıcı menüden toggle ile açıp kapatabilir
+  - Bilgisayar açıldığında veya yeniden başlatıldığında uygulama otomatik başlar
 
 ---
 
@@ -90,6 +100,7 @@ Uygulama ikonu olarak macOS SF Symbols içindeki `externaldrive` simgesi kullan�
   - Harici aygıt listesi (ikon + isim) + her satırda **Eject** butonu  
   - Boş durumda "Harici aygıt bulunamadı" / "No external devices found" mesajı  
   - Dil otomatik seçimi (sistem diline göre)  
+  - **Otomatik başlatma** toggle butonu (bilgisayar açıldığında otomatik başlat)
   - En altta **Quit** butonu
 
 - `ExternalDevice.swift`  
@@ -108,9 +119,14 @@ Uygulama ikonu olarak macOS SF Symbols içindeki `externaldrive` simgesi kullan�
   - Asenkron aygıt yükleme ile performans optimizasyonu
 
 - `Localization.swift`  
-  - Basit `AppLanguage` enum’u (`tr` / `en`)  
-  - Tüm kullanıcıya dönük metinler için `L10n` helper’ı  
+  - Basit `AppLanguage` enum'u (`tr` / `en`)  
+  - Tüm kullanıcıya dönük metinler için `L10n` helper'ı  
   - `currentLanguage()` ile sistem diline göre otomatik seçim
+
+- `LaunchAtLoginManager.swift`  
+  - Otomatik başlatma yönetimi  
+  - macOS 13+ için `SMAppService` API'si kullanır  
+  - Login Items'a ekleme/çıkarma işlemlerini yönetir
 
 ---
 

@@ -83,6 +83,14 @@ struct L10n { // Localization kısaltması için L10n ismi kullanıldı.
         case .english: return "Language" // İngilizce satır başlığı.
         }
     }
+
+    /// Otomatik başlatma buton etiketi. // Otomatik başlatma toggle butonu metni.
+    static func launchAtLogin(_ lang: AppLanguage) -> String { // Dil parametresi alan fonksiyon.
+        switch lang { // Dil ayrımı.
+        case .turkish: return "Bilgisayar açıldığında otomatik başlat" // Türkçe metin.
+        case .english: return "Launch at login" // İngilizce metin.
+        }
+    }
 }
 
 
